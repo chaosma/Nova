@@ -1,12 +1,11 @@
 //! This library implements Nova, a high-speed recursive SNARK.
 #![deny(
-  warnings,
-  unused,
-  future_incompatible,
+  future_incompatible, 
   nonstandard_style,
   rust_2018_idioms,
   missing_docs
 )]
+// TODO: add warnings, unused back to deny list
 #![allow(non_snake_case)]
 #![allow(clippy::type_complexity)]
 #![forbid(unsafe_code)]

@@ -21,6 +21,7 @@ rand_chacha = "0.3"
 itertools = "0.9.0"
 subtle = "2.4"
 pasta_curves = { version = "0.5", features = ["repr-c", "serde"] }
+halo2curves = { git = "https://github.com/chaosma/halo2curves", branch = "feature/curve-grumpkin", features = ["derive_serde"] }
 neptune = { version = "9.0.0", default-features = false }
 generic-array = "0.14.4"
 num-bigint = { version = "0.4", features = ["serde", "rand"] }
@@ -55,3 +56,6 @@ default = []
 portable = ["pasta-msm/portable"]
 cuda = ["neptune/cuda", "neptune/pasta", "neptune/arity24"]
 opencl = ["neptune/opencl", "neptune/pasta", "neptune/arity24"]
+
+[patch."https://github.com/chaosma/halo2curves"]
+halo2curves = { path = "/Users/chao/opensource/appliedzkp/halo2curves" }
