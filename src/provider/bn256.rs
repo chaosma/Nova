@@ -4,6 +4,7 @@ use crate::{
     keccak::Keccak256Transcript,
     pedersen::CommitmentEngine,
     poseidon::{PoseidonRO, PoseidonROCircuit},
+    msm::cpu_best_multiexp,
   },
   traits::{CompressedGroup, Group, PrimeFieldExt, TranscriptReprTrait},
 };
@@ -72,7 +73,7 @@ macro_rules! impl_traits {
         scalars: &[Self::Scalar],
         bases: &[Self::PreprocessedGroupElement],
       ) -> Self {
-          unimplemented!();
+          cpu_best_multiexp(scalars, bases)
       }
 
       fn preprocessed(&self) -> Self::PreprocessedGroupElement {
@@ -163,3 +164,5 @@ impl_traits!(
   "30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47"
 );
 */
+
+

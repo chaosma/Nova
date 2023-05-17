@@ -10,3 +10,4 @@ pub mod pasta;
 pub mod pedersen;
 pub mod poseidon;
 pub mod bn256;
+pub mod msm;
