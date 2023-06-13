@@ -11,20 +11,15 @@ use crate::{
 
 use halo2curves::{
   CurveAffineExt, CurveExt,
-  bn256::{self, G1, G1Affine},
-  grumpkin,
+  bn256::{self, G1Affine},
+  grumpkin::{self, G1Affine as G1Affineb},
   group::{Curve, GroupEncoding, Group as bnGroup},
-  group::prime::PrimeCurveAffine,
 };
 
-use rayon::prelude::*;
 use ff::{FromUniformBytes, PrimeField};
 use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{Deserialize, Serialize};
-use sha3::Shake256;
-use std::io::Read;
-use digest::{ExtendableOutput, Input};
 
 
 /// A wrapper for compressed group elements of bn256
@@ -134,6 +129,8 @@ macro_rules! impl_traits {
 
       fn decompress(&self) -> Option<$name::G1> {
           Some($name::G1::from_bytes(&$name::G1Compressed::from_slice(&self.repr).unwrap()).unwrap())
+          //let mut compressed: $name::G1Compressed;
+          //compressed.as_mut().copy_from_slice(slice)
       }
     }
 
@@ -162,14 +159,10 @@ impl_traits!(
 );
 
 
-/*
 impl_traits!(
   grumpkin,
   GrumpkinCompressedElementWrapper,
-  G1,
-  G1Affine,
+  G1b,
+  G1Affineb,
   "30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47"
 );
-*/
-
-

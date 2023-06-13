@@ -8,20 +8,16 @@ use crate::{
   },
   traits::{CompressedGroup, Group, PrimeFieldExt, TranscriptReprTrait},
 };
-use digest::{ExtendableOutput, Input};
 use ff::{FromUniformBytes, PrimeField};
 use num_bigint::BigInt;
 use num_traits::Num;
 use pasta_curves::{
   self,
   arithmetic::{CurveAffine, CurveExt},
-  group::{cofactor::CofactorCurveAffine, Curve, Group as AnotherGroup, GroupEncoding},
+  group::{Curve, Group as AnotherGroup, GroupEncoding},
   pallas, vesta, Ep, EpAffine, Eq, EqAffine,
 };
-use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use sha3::Shake256;
-use std::io::Read;
 
 /// A wrapper for compressed group elements of pallas
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -179,6 +175,10 @@ impl_traits!(
 #[cfg(test)]
 mod tests {
   use super::*;
+  use sha3::Shake256;
+  use std::io::Read;
+  use digest::{ExtendableOutput, Input};
+
   type G = pasta_curves::pallas::Point;
 
   fn from_label_serial(label: &'static [u8], n: usize) -> Vec<EpAffine> {
