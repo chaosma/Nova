@@ -4,7 +4,7 @@ use crate::{
     keccak::Keccak256Transcript,
     pedersen::CommitmentEngine,
     poseidon::{PoseidonRO, PoseidonROCircuit},
-    msm::cpu_best_multiexp,
+    utils::{cpu_best_multiexp, from_label as from_label_helper},
   },
   traits::{CompressedGroup, Group, PrimeFieldExt, TranscriptReprTrait},
 };
@@ -96,54 +96,7 @@ macro_rules! impl_traits {
       }
 
       fn from_label(label: &'static [u8], n: usize) -> Vec<Self::PreprocessedGroupElement> {
-        let mut shake = Shake256::default();
-        shake.input(label);
-        let mut reader = shake.xof_result();
-        let mut uniform_bytes_vec = Vec::new();
-        for _ in 0..n {
-          let mut uniform_bytes = [0u8; 32];
-          reader.read_exact(&mut uniform_bytes).unwrap();
-          uniform_bytes_vec.push(uniform_bytes);
-        }
-        let ck_proj: Vec<$name_curve> = (0..n)
-          .collect::<Vec<usize>>()
-          .into_par_iter()
-          .map(|i| {
-            let hash = $name_curve::hash_to_curve("from_uniform_bytes");
-            hash(&uniform_bytes_vec[i])
-          })
-          .collect();
-
-        let num_threads = rayon::current_num_threads();
-        if ck_proj.len() > num_threads {
-          let chunk = (ck_proj.len() as f64 / num_threads as f64).ceil() as usize;
-          (0..num_threads)
-            .collect::<Vec<usize>>()
-            .into_par_iter()
-            .map(|i| {
-              let start = i * chunk;
-              let end = if i == num_threads - 1 {
-                ck_proj.len()
-              } else {
-                core::cmp::min((i + 1) * chunk, ck_proj.len())
-              };
-              if end > start {
-                let mut ck = vec![$name_curve_affine::identity(); end - start];
-                <Self as Curve>::batch_normalize(&ck_proj[start..end], &mut ck);
-                ck
-              } else {
-                vec![]
-              }
-            })
-            .collect::<Vec<Vec<$name_curve_affine>>>()
-            .into_par_iter()
-            .flatten()
-            .collect()
-        } else {
-          let mut ck = vec![$name_curve_affine::identity(); n];
-          <Self as Curve>::batch_normalize(&ck_proj, &mut ck);
-          ck
-        }
+          from_label_helper::<$name_curve_affine>(label, n)
       }
 
       fn to_coordinates(&self) -> (Self::Base, Self::Base, bool) {

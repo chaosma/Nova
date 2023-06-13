@@ -4,16 +4,17 @@ use crate::{
     keccak::Keccak256Transcript,
     pedersen::CommitmentEngine,
     poseidon::{PoseidonRO, PoseidonROCircuit},
-    msm::cpu_best_multiexp,
+    utils::{cpu_best_multiexp, from_label as from_label_helper},
   },
   traits::{CompressedGroup, Group, PrimeFieldExt, TranscriptReprTrait},
 };
 
 use halo2curves::{
   CurveAffineExt, CurveExt,
-  bn256,
+  bn256::{self, G1, G1Affine},
   grumpkin,
   group::{Curve, GroupEncoding, Group as bnGroup},
+  group::prime::PrimeCurveAffine,
 };
 
 use rayon::prelude::*;
@@ -22,6 +23,8 @@ use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use sha3::Shake256;
+use std::io::Read;
+use digest::{ExtendableOutput, Input};
 
 
 /// A wrapper for compressed group elements of bn256
@@ -81,11 +84,15 @@ macro_rules! impl_traits {
       }
 
       fn compress(&self) -> Self::CompressedGroupElement {
-          unimplemented!()
+          let tmp = self.to_bytes();
+          let slice = tmp.as_ref().clone();
+          let mut by = [0u8; 32];
+          by.copy_from_slice(slice);
+          $name_compressed::new(by)
       }
 
       fn from_label(label: &'static [u8], n: usize) -> Vec<Self::PreprocessedGroupElement> {
-          unimplemented!();
+          from_label_helper::<$name_curve_affine>(label, n)
       }
 
       fn to_coordinates(&self) -> (Self::Base, Self::Base, bool) {

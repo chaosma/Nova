@@ -1,9 +1,67 @@
 //! Native implementation of fast multiexp for platforms that do not support pasta_msm/semolina
 /// Adapted from zcash/halo2
 
-use halo2curves::CurveAffine;
-use halo2curves::group::Group;
+use halo2curves::{
+  CurveExt, CurveAffine,
+  group::{Curve, Group as bnGroup},
+};
 use ff::PrimeField;
+use sha3::Shake256;
+use std::io::Read;
+use digest::{ExtendableOutput, Input};
+use rayon::prelude::*;
+
+/// generate uniformly distributed points from label
+pub fn from_label<C: CurveAffine> (label: &'static [u8], n: usize) -> Vec<C> {
+   let mut shake = Shake256::default();
+   shake.input(label);
+   let mut reader = shake.xof_result();
+   let mut uniform_bytes_vec = Vec::new();
+   for _ in 0..n {
+       let mut uniform_bytes = [0u8; 32];
+       reader.read_exact(&mut uniform_bytes).unwrap();
+       uniform_bytes_vec.push(uniform_bytes);
+   }
+   let ck_proj: Vec<C::Curve> = (0..n)
+       .collect::<Vec<usize>>()
+       .into_par_iter()
+       .map(|i| {
+           let hash = C::Curve::hash_to_curve("from_uniform_bytes");
+           hash(&uniform_bytes_vec[i])
+        })
+        .collect();
+
+    let num_threads = rayon::current_num_threads();
+    if ck_proj.len() > num_threads {
+        let chunk = (ck_proj.len() as f64 / num_threads as f64).ceil() as usize;
+        (0..num_threads)
+          .collect::<Vec<usize>>()
+          .into_par_iter()
+          .map(|i| {
+            let start = i * chunk;
+            let end = if i == num_threads - 1 {
+              ck_proj.len()
+            } else {
+              core::cmp::min((i + 1) * chunk, ck_proj.len())
+            };
+            if end > start {
+              let mut ck = vec![C::identity(); end - start];
+              C::Curve::batch_normalize(&ck_proj[start..end], &mut ck);
+              ck
+            } else {
+              vec![]
+            }
+         })
+         .collect::<Vec<Vec<C>>>()
+         .into_par_iter()
+         .flatten()
+         .collect()
+    } else {
+        let mut ck = vec![C::identity(); n];
+        C::Curve::batch_normalize(&ck_proj, &mut ck);
+          ck
+    }
+}
 
 fn cpu_multiexp_serial<C: CurveAffine>(coeffs: &[C::Scalar], bases: &[C], acc: &mut C::Curve) {
   let coeffs: Vec<_> = coeffs.iter().map(|a| a.to_repr()).collect();
@@ -129,3 +187,5 @@ pub fn cpu_best_multiexp<C: CurveAffine>(coeffs: &[C::Scalar], bases: &[C]) -> C
     acc
   }
 }
+
+
