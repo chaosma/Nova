@@ -69,6 +69,7 @@ impl<Scalar: PrimeField> MultilinearPolynomial<Scalar> {
     self.Z.len()
   }
 
+  // fold/reduce Z by half using ratio = r
   pub fn bound_poly_var_top(&mut self, r: &Scalar) {
     let n = self.len() / 2;
 

@@ -612,6 +612,8 @@ impl<Scalar: PrimeField> BigNat<Scalar> {
 
   /// Combines limbs into groups.
   pub fn group_limbs(&self, limbs_per_group: usize) -> BigNat<Scalar> {
+    // chao: suppose n_groups=2, vs=[v0,v1,v2,v3] i.e. 4 limbs
+    // limb_values = [v0+v1*w, v2+v3*w]
     let n_groups = (self.limbs.len() - 1) / limbs_per_group + 1;
     let limb_values = self.limb_values.as_ref().map(|vs| {
       let mut values: Vec<Scalar> = vec![Scalar::ZERO; n_groups];
