@@ -46,6 +46,9 @@ use traits::{
   snark::RelaxedR1CSSNARKTrait,
   AbsorbInROTrait, Group, ROConstants, ROConstantsCircuit, ROConstantsTrait, ROTrait,
 };
+use std::fs::File;
+use std::io::{Read, Write};
+use serde_json;
 
 /// A type that holds public parameters of Nova
 #[derive(Serialize, Deserialize)]
@@ -539,6 +542,31 @@ where
   _p_c2: PhantomData<C2>,
 }
 
+impl<G1, G2, C1, C2, S1, S2> VerifierKey<G1, G2, C1, C2, S1, S2>
+where
+  G1: Group<Base = <G2 as Group>::Scalar>,
+  G2: Group<Base = <G1 as Group>::Scalar>,
+  C1: StepCircuit<G1::Scalar>,
+  C2: StepCircuit<G2::Scalar>,
+  S1: RelaxedR1CSSNARKTrait<G1>,
+  S2: RelaxedR1CSSNARKTrait<G2>,
+{
+    /// save VerifierKey to local file
+    pub fn save_to_file(&self, file_name: &str) -> Result<(), std::io::Error> {
+        let serialized_key = serde_json::to_string(&self)?;
+        let mut file = File::create(file_name)?;
+        file.write_all(serialized_key.as_bytes())?;
+        Ok(())
+    }
+    /// load VerifierKey from local file
+    pub fn load_from_file(file_name: &str) -> Self {
+        let mut file = File::open(file_name).unwrap();
+        let mut json_data = String::new();
+        file.read_to_string(&mut json_data).unwrap();
+        serde_json::from_str::<VerifierKey<G1, G2, C1, C2, S1, S2>>(&json_data).unwrap()
+    }
+}
+
 /// A SNARK that proves the knowledge of a valid `RecursiveSNARK`
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(bound = "")]
@@ -577,6 +605,22 @@ where
   S1: RelaxedR1CSSNARKTrait<G1>,
   S2: RelaxedR1CSSNARKTrait<G2>,
 {
+
+  /// save CompressedSNARK to local file
+  pub fn save_to_file(&self, file_name: &str) -> Result<(), std::io::Error> {
+    let serialized_key = serde_json::to_string(&self)?;
+    let mut file = File::create(file_name)?;
+    file.write_all(serialized_key.as_bytes())?;
+    Ok(())
+  }
+  /// load VerifierKey from local file
+  pub fn load_from_file(file_name: &str) -> Self {
+    let mut file = File::open(file_name).unwrap();
+    let mut json_data = String::new();
+    file.read_to_string(&mut json_data).unwrap();
+    serde_json::from_str::<CompressedSNARK<G1, G2, C1, C2, S1, S2>>(&json_data).unwrap()
+  }
+
   /// Creates prover and verifier keys for `CompressedSNARK`
   pub fn setup(
     pp: &PublicParams<G1, G2, C1, C2>,

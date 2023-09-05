@@ -146,7 +146,7 @@ fn main() {
   println!("=========================================================");
 
   let num_steps = 10;
-  for num_iters_per_step in [1024, 2048, 4096, 8192, 16384, 32768, 65535] {
+  for num_iters_per_step in [2048]{ // [1024, 2048, 4096, 8192, 16384, 32768, 65535] {
     // number of iterations of MinRoot per Nova's recursive step
     let circuit_primary = MinRootCircuit {
       seq: vec![
@@ -257,6 +257,9 @@ fn main() {
     // produce a compressed SNARK
     println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
     let (pk, vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
+    // chao: for debug
+    println!("saving CompressedSNARK VerifyingKey");
+    let _ = vk.save_to_file("/Users/chao/opensource/nova/nova/src/vk.json");
 
     let start = Instant::now();
     type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<G1>;
@@ -271,7 +274,13 @@ fn main() {
       start.elapsed()
     );
     assert!(res.is_ok());
+
     let compressed_snark = res.unwrap();
+
+    // chao: for debug
+    println!("saving CompressedSNARK proof");
+    let _ = compressed_snark.save_to_file("/Users/chao/opensource/nova/nova/src/proof.json");
+
 
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
     bincode::serialize_into(&mut encoder, &compressed_snark).unwrap();
